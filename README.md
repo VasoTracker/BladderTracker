@@ -1,6 +1,6 @@
 BladderTracker
 ======
-<img src="https://github.com/VasoTracker/BladderTracker/v1-0-2/Bladder_SPLASH.gif " width="400" align="right">
+<img src="v1-0-2/Bladder_SPLASH.gif " width="400" align="right">
 
 Open source software for acquiring images and pressure data. 
 
