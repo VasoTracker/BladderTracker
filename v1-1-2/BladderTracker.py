@@ -39,10 +39,9 @@
 ## 
 ##################################################
 ## 
-## Author: Penelope F Lawton, Matthew D Lee, and Calum Wilson
-## Additional programming: Nathan R. Tykocki
+## Author: Calum Wilson & Nathan R. Tykocki
 ## Copyright: Copyright 2019, VasoTracker
-## Credits: Penelope F Lawton, Matthew D Lee, and Calum Wilson (and maybe Nathan Tykocki)
+## Credits: Calum Wilson & Nathan R. Tykocki
 ## License: BSD 3-Clause License
 ## Version: 1.1.0
 ## Maintainer: Nathan Tykocki
