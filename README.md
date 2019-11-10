@@ -12,8 +12,6 @@ One day, BladderTracker might find its way into a publication. We will link to i
 # Contributors:
 **University of Strathclyde:**
 * Calum Wilson
-* Matthew D Lee
-* John G McCarron
 
 **Michigan State University:**
 * Nathan Tykocki
