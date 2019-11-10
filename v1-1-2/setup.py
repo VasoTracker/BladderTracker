@@ -1,3 +1,6 @@
+# To build BladderTracker: python setup.py build
+# To build BladderTracker executable: python setup.py bdist_msi
+
 import cx_Freeze
 import sys
 import matplotlib
@@ -38,15 +41,16 @@ executables = [cx_Freeze.Executable("BladderTracker.py", base=base, icon="bladde
 additional_mods = ['cv2','atexit','numpy.core._methods', 'numpy.lib.format', "matplotlib.backends.backend_tkagg"]
 excludes = ["winpty"]
 #buildOptions = dict(include_files = ['SampleData/']) #folder,relative path. Use tuple like in the single file to set a absolute path.
-includefiles = ["bladder_ICON.ico", "Start_up.bat",'SampleData/', 'BladderTracker_Temperature_Controller_Code', 'BladderTracker_Pressure_Monitor_V2/','Results/', 'Bladder_SPLASH.gif', 'OpenCV.cfg', 'MMConfig.cfg',
+includefiles = ["bladder_ICON.ico", "Start_up.bat",'SampleData/', 'Results/', 'Bladder_SPLASH.gif', 'OpenCV.cfg', 'MMConfig.cfg',
                 'opencv_ffmpeg310_64.dll', 'opencv_ffmpeg320_64.dll'] + np_dlls_fullpath + qt_platform_files_include_pairs + mkl_omp_files
+                ## Include these in the square brackets when bundling the Arduino code: ['BladderTracker_Temperature_Controller_Code', 'BladderTracker_Pressure_Monitor_V2/']
 
 cx_Freeze.setup(
         name = "BladderTracker",
         options = {"build_exe": {"excludes": excludes,'includes': additional_mods, 
                     "packages":['skimage',"tkFileDialog","scipy","cv2","Tkinter", "matplotlib", "Queue","cytoolz"], 
                     "include_files":includefiles}},
-        version = "1.0.2",
+        version = "1.1.2",
         description = "BladderTracker bladder imaging software",
         executables = executables    )
 

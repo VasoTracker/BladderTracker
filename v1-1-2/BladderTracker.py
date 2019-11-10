@@ -43,12 +43,13 @@
 ## Copyright: Copyright 2019, VasoTracker
 ## Credits: Calum Wilson & Nathan R. Tykocki
 ## License: BSD 3-Clause License
-## Version: 1.1.0
+## Version: 1.1.2
 ## Maintainer: Nathan Tykocki
 ## Email: vasotracker@gmail.com
 ## Status: Beta
 ## Last updated: 2019-11-05 (NRT)
 ## 
+##################################################
 ##################################################
 ## We found the following to be useful:
 ## https://www.safaribooksonline.com/library/view/python-cookbook/0596001673/ch09s07.html
@@ -247,11 +248,21 @@ class GuiPart(tk.Frame):
     def launchabout(self):
         webbrowser.open_new(r"http://www.vasotracker.com/about/")
 
+    def launchupdate(self):
+        tmb.showinfo("We are not that clever", "So you will have to see if their is an update to download yourself... the download page should pop up in your web browser...")
+        webbrowser.open_new(r"http://www.vasotracker.com/downloads/bladdertracker/")
+
+
     def launchsnake(self):
         tmb.showinfo("We did warn you.", "Any hope of this being a productive day have just went out the window...")
         window = tk.Toplevel(root)
         window.iconbitmap('bladder_ICON.ICO')
         snake.Application(window)
+
+    def launchmusic(self):
+        tmb.showinfo("We like dancing in the shower", "Whether in the lab or in the shower, these songs make us boogie...")
+        webbrowser.open_new(r"https://open.spotify.com/playlist/5isnlNKb6Xtm975J9rxxT0?si=U5qpBEeHTKW9S0mLe70rKQ")
+
 
 
 
@@ -271,22 +282,25 @@ class GuiPart(tk.Frame):
 
     # create a menu bar with an Exit command
         menubar = tk.Menu(root)
-        filemenu = tk.Menu(menubar, tearoff=0)
-        filemenu.add_command(label="Exit", command=self.close_app)
-        filemenu = tk.Menu(menubar, tearoff=0)
+        self.filemenu = tk.Menu(menubar, tearoff=0)
+        self.filemenu.add_command(label="Exit", command=self.close_app)
+        #self.filemenu = tk.Menu(menubar, tearoff=0)
         
     # Create a help menu
-        helpmenu = tk.Menu(menubar, tearoff=0)
-        helpmenu.add_command(label='User Guide', command = self.gotouserguide)
-        helpmenu.add_command(label='Contact', command = self.gotocontact)
-        helpmenu.add_command(label='About', command = self.launchabout)
+        self.helpmenu = tk.Menu(menubar, tearoff=0)
+        self.helpmenu.add_command(label='Inspiration', command = self.launchmusic)
+        self.helpmenu.add_separator()
+        self.helpmenu.add_command(label='User Guide', command = self.gotouserguide)
+        self.helpmenu.add_command(label='Contact', command = self.gotocontact)
+        self.helpmenu.add_command(label='About', command = self.launchabout)
+        self.helpmenu.add_command(label='Update', command = self.launchupdate)
+        self.helpmenu.add_separator()
+        self.helpmenu.add_command(label='Do not click here...', command = self.launchsnake)
 
-        helpmenu.add_separator()
-
-        helpmenu.add_command(label='Do not click here...', command = self.launchsnake)
-        menubar.add_cascade(label="File", menu=filemenu)
-        menubar.add_cascade(label="Help", menu=helpmenu)
+        menubar.add_cascade(label="File", menu=self.filemenu)
+        menubar.add_cascade(label="Help", menu=self.helpmenu)
         root.config(menu=menubar)
+
         self.pack(fill=BOTH, expand=1)
 
     # Make the toolbar along the top
@@ -364,9 +378,11 @@ class GuiPart(tk.Frame):
         #self.pressure1 = []
         #self.pressure2 = []
         self.pressureavglist = [np.nan] * (self.npts-1)
+        self.distancelist = [np.nan] * (self.npts-1)
 
         self.T = []
         self.PAVG = np.nan
+        self.D = np.nan
 
     def sortdata(self,temppres):
         #print temppres
@@ -428,16 +444,17 @@ class GuiPart(tk.Frame):
                 
                 # Need to set this to remember the previos contents.
                 if self.queue2.qsize(  )>0:
-                    (P,D1,self.T) = self.queue2.get(0)
+                    (self.P,self.D1,self.T) = self.queue2.get(0)
                     #self.PAVG = (P1+P2)/2
                     
                 else:
-                    (P,D1,T) = (np.nan,np.nan, np.nan)
+                    (self.P,self.D1,self.T) = (np.nan,np.nan, np.nan)
 
 
 
-                
-                #PAVG = 100.99
+                # Fake values to check the plotting
+                #self.P = 100
+                #self.D1 = 50
                 '''
                 #temppres = self.Arduino.getData()
                 #P1,P2,T = self.sortdata(temppres)
@@ -462,7 +479,7 @@ class GuiPart(tk.Frame):
                 #self.toolbar.update_temp(T) #### CHANGE to T
                 #self.toolbar.update_pressure(P1,P2, self.PAVG)
                 self.toolbar.update_temp(self.T) #### CHANGE to T
-                self.toolbar.update_pressure(P, D1)
+                self.toolbar.update_pressure(self.P, self.D1)
 
             # Get the acquisition rate
                 
@@ -480,9 +497,12 @@ class GuiPart(tk.Frame):
                 self.templist.append(self.T)
                 #pressure1list.append(P1)
                 #pressure2list.append(P1)
-                self.pressureavglist.append(self.PAVG)
+                self.pressureavglist.append(self.P)
+                self.distancelist.append(self.D1)
+
+                # Remove excess datapoints
                 if len(self.timelist)>self.npts:
-                    print "we are in here"
+                    
                     # Should use deque to do this.
                     
                     d = deque(self.timelist)
@@ -497,6 +517,11 @@ class GuiPart(tk.Frame):
                     d.popleft()
                     self.pressureavglist = list(d)
                     
+                    d = deque(self.distancelist)
+                    d.popleft()
+                    self.distancelist = list(d)
+
+
                     '''
                     self.timelist.pop(0)
                     self.templist.pop(0)
@@ -505,15 +530,8 @@ class GuiPart(tk.Frame):
                     self.pressureavglist.pop(0)
                     '''
 
-                print "Length of pressurelist = ", len(self.pressureavglist)
-
-
-
-
-
-
                 # Save the required data
-                savedata = timenow,self.T, self.PAVG
+                savedata = timenow,self.T, self.P, self.D1
                 self.writeToFile(savedata)
 
                 #Get points within the axis limits
@@ -524,11 +542,12 @@ class GuiPart(tk.Frame):
 
                 # Get the corresponding ydata points
                 ydata1 = self.pressureavglist[len(self.pressureavglist)-len(xdata)::]#[0::10]
-
-                
+                ydata2 = self.distancelist[len(self.distancelist)-len(xdata)::]#[0::10]
+               
                 #with self.timeit2("graph"):
                 if self.count%1 == 0:
-                    self.graphframe.plot(xdata,ydata1,self.toolbar.xlims, self.toolbar.ylims, self.toolbar.xlims2, self.toolbar.ylims2)    
+                    print "we should be plotting here"
+                    self.graphframe.plot(xdata,ydata1,ydata2,self.toolbar.xlims, self.toolbar.ylims, self.toolbar.xlims2, self.toolbar.ylims2)    
                 
             else:
                 print "no image"    
@@ -582,19 +601,11 @@ class ToolBar(tk.Frame):
         '''
         pres_string = str(round(P,3))
         self.pressure_contents.set(pres_string)
-        
-    def update_distance(self, P,D1):
-        # Update distance
-        '''
-        self.pressureavg_entry.config(state='normal')
-        self.pressureavg_entry.delete(0, 'end')
-        self.pressureavg_entry.insert(0, '%.2f' % PAvg)
-        self.pressureavg_entry.config(state='DISABLED')
-        '''
+
         pres_string = str(round(D1,3))
         self.distance_contents.set(pres_string)
-
-    
+        
+   
     def update_time(self, time):
         #Update the temperature widget
         self.time_contents.set(str(datetime.timedelta(seconds=time))[:-4])
@@ -1029,8 +1040,11 @@ class ToolBar(tk.Frame):
         pressureavg_label = ttk.Label(acquisition_group, text = 'Avg Pressure (mmHg):')
         pressureavg_label.grid(row=1, column=0, sticky=E)
 
+        distance_label = ttk.Label(acquisition_group, text = 'Distance (' + u'\u03bcm):')
+        distance_label.grid(row=2, column=0, sticky=E)
+
         time_label = ttk.Label(acquisition_group, text = 'Time (hr:min:sec:msec):')
-        time_label.grid(row=4, column=0, sticky=E)
+        time_label.grid(row=3, column=0, sticky=E)
 
         self.temp_contents = IntVar()
         self.temp_contents.set("N/A")
@@ -1044,11 +1058,17 @@ class ToolBar(tk.Frame):
         self.pressureavg_entry.config(state=DISABLED)
         self.pressureavg_entry.grid(row=1, column=1, pady=0)
 
+        self.distance_contents = IntVar()
+        self.distance_contents.set("N/A")
+        self.distance_entry = ttk.Entry(acquisition_group, textvariable = self.distance_contents, width=10)
+        self.distance_entry.config(state=DISABLED)
+        self.distance_entry.grid(row=2, column=1, pady=0)
+
         self.time_contents = IntVar()
         self.time_contents.set(str(datetime.timedelta(seconds=time.time()-time.time()))[:-4])
         self.time_entry = ttk.Entry(acquisition_group,textvariable = self.time_contents, width=10)
         self.time_entry.config(state=DISABLED)
-        self.time_entry.grid(row=4, column=1, pady=0)
+        self.time_entry.grid(row=3, column=1, pady=0)
 
 
 
@@ -1170,6 +1190,14 @@ class GraphFrame(tk.Frame):
         #self.graphview.ax2.set_ylim(self.parent.toolbar.ylims2[0],self.parent.toolbar.ylims2[1])
         self.graphview.figure.canvas.draw()
 
+    def update_scale2(self, blit=True): #### NEE
+        print "attempting to update a blitted axis"
+        self.graphview.ax2.set_xlim(self.parent.toolbar.xlims2[0],self.parent.toolbar.xlims2[1]) # Outer diameter
+        self.graphview.ax2.set_ylim(self.parent.toolbar.ylims2[0],self.parent.toolbar.ylims2[1]) # Outer diameter
+
+        self.graphview.figure.canvas.draw()
+
+
     def mainWidgets(self,blit=True):  
         #
         # We want to explicitly set the size of the graph so that we can blit
@@ -1177,16 +1205,16 @@ class GraphFrame(tk.Frame):
         print "this is the width: ", self.parent.graphframe.winfo_width()
 
         self.graphview = tk.Label(self)
-        print "Graph width: ", self.graphview.winfo_width()
-        print "Graph height: ", self.parent.graphframe.winfo_height()
+        #print "Graph width: ", self.graphview.winfo_width()
+        #print "Graph height: ", self.parent.graphframe.winfo_height()
         default_figsize = (plt.rcParams.get('figure.figsize'))
-        print "default fig size = ", default_figsize
+        #print "default fig size = ", default_figsize
         other_figsize = [self.parent.graphframe.winfo_width()/100,self.parent.graphframe.winfo_height()/100]
         print other_figsize
-        self.graphview.figure,self.graphview.ax1 = plt.subplots(1,1, figsize=other_figsize)
-        self.graphview.figure = pyplot.figure()
-        self.graphview.ax1 = self.graphview.figure.add_subplot(211)
-        self.graphview.ax2 = self.graphview.figure.add_subplot(212)
+        self.graphview.figure,(self.graphview.ax1,self.graphview.ax2) = plt.subplots(2,1, figsize=other_figsize)
+        #self.graphview.figure = pyplot.figure()
+        #self.graphview.ax1 = self.graphview.figure.add_subplot(211)
+        #self.graphview.ax2 = self.graphview.figure.add_subplot(212)
         self.graphview.line, = self.graphview.ax1.plot([],[]) # initialize line to be drawn
         self.graphview.line2, = self.graphview.ax2.plot([],[])
 
@@ -1195,11 +1223,11 @@ class GraphFrame(tk.Frame):
         self.graphview.ax1.set_ylim(self.ylim1,self.ylim2) # Pressure
         self.graphview.ax2.set_ylim(self.ylim3,self.ylim4) # Distance
 
-        self.graphview.ax1.set_xlabel('Time (s)', fontsize=14) # Pressure labels
+        #self.graphview.ax1.set_xlabel('Time (s)', fontsize=14) # Pressure labels
         self.graphview.ax1.set_ylabel('Pressure (mmHg)', fontsize=14) # Pressure labels
 
         self.graphview.ax2.set_xlabel('Time (s)', fontsize=14) # Distance labels
-        self.graphview.ax2.set_ylabel('Distance (um)', fontsize=14) # Distance labels
+        self.graphview.ax2.set_ylabel('Distance (' + u'\u03bcm):', fontsize=14) # Distance labels
 
         self.graphview.figure.canvas = FigureCanvasTkAgg(self.graphview.figure, self)
         self.graphview.figure.canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=None, expand=False) ##### THIS IS THE PROBLEM WITH BLITTING HERE. WE NEED TO EXPLICITLY STATE THE FIGURE SIZE ABOVE!!
@@ -1224,8 +1252,9 @@ class GraphFrame(tk.Frame):
         
     
 
-    def plot(self, timelist1, ydata1, xlims,ylims, xlims2, ylims2, blit=True):
+    def plot(self, timelist1, ydata1, ydata2, xlims,ylims, xlims2, ylims2, blit=True):
         # Get the data
+
         if len(timelist1)>1:
             # Set the axis values
             self.graphview.ax1.set_xlim(xlims[0],xlims[1])  # Pressure
@@ -1258,6 +1287,7 @@ class GraphFrame(tk.Frame):
 
                 try:
                     self.graphview.ax1.lines.remove(self.graphview.line)
+                    self.graphview.ax2.lines.remove(self.graphview.line2)
                 except:
                     pass
 
@@ -1265,11 +1295,15 @@ class GraphFrame(tk.Frame):
                                             timelist1,ydata1,
                                                 color="blue", linewidth = 3)
 
+                self.graphview.line2, = self.graphview.ax2.plot(
+                                            timelist1,ydata2,
+                                                color="red", linewidth = 3)
 
+                
                 self.graphview.figure.canvas.draw()
                 self.graphview.figure.canvas.get_tk_widget().update_idletasks()
-                self.after(2,self.plotter)
-                self.graphview.figure.canvas.flush_events()
+                #self.after(2,self.plotter)
+                #self.graphview.figure.canvas.flush_events()
             if blit == True:
                 self.graphview.figure.canvas.restore_region(self.ax1background)
                 self.graphview.figure.canvas.restore_region(self.ax2background)
@@ -1280,15 +1314,13 @@ class GraphFrame(tk.Frame):
                 except:
                     pass
 
-
-
                 self.graphview.line.set_xdata(timelist1)#[::-1][0::int(self.delta_i)][::-1])
                 self.graphview.line.set_ydata(ydata1)#[::-1][0::int(self.delta_i)][::-1])
                 self.graphview.line.set_color('blue')
 
 
-                self.graphview.line2.set_xdata(timelist2[::-1][0::int(self.delta_i)][::-1])
-                self.graphview.line2.set_ydata(ydata2[::-1][0::int(self.delta_i)][::-1])
+                self.graphview.line2.set_xdata(timelist1)#[::-1][0::int(self.delta_i)][::-1])
+                self.graphview.line2.set_ydata(ydata2)#[::-1][0::int(self.delta_i)][::-1])
                 self.graphview.line2.set_color('red')
 
                 # redraw just the points
